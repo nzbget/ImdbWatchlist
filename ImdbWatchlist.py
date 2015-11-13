@@ -31,7 +31,7 @@
 # Info about pp-script:
 # Author: Andrey Prygunkov (nzbget@gmail.com).
 # License: GPLv3 (http://www.gnu.org/licenses/gpl.html).
-# PP-Script Version: 1.0.
+# PP-Script Version: 1.1.
 #
 # NOTE: This script requires Python to be installed on your system.
 
@@ -58,6 +58,11 @@ sys.path.append(dirname(__file__) + '/lib')
 import os
 import re
 import urllib2
+import traceback
+
+# Exit codes used by NZBGet
+FEEDSCRIPT_SUCCESS=93
+FEEDSCRIPT_ERROR=94
 
 # Check if all required script config options are present in config file
 required_options = ('NZBPO_ImdbUserId', 'NZBPO_Verbose')
@@ -75,6 +80,8 @@ rssfeed_file=os.environ['NZBFP_FILENAME']
 # env var "NZBPO_WATCHLISTFILE" for development purposes (to avoid imdb request on each test)
 watchlist_file=os.environ.get('NZBPO_WATCHLISTFILE')
 out_file=os.environ.get('NZBPO_FEEDOUTFILE')
+
+errors = False
 
 def fetch_watchlist():
     """ fetch watchlist from imdb.com """
@@ -152,14 +159,27 @@ def filter_feed(feed, imdbids):
                 new_feed += line + "\n"
     return new_feed
 
-watchlist = load_watchlist()
-if verbose:
-    print(watchlist)
+try:
+    watchlist = load_watchlist()
+    if verbose:
+        print(watchlist)
 
-imdbids = collect_imdbids(watchlist)
-if verbose:
-    print('IMDb-ID List: %s' % imdbids)
+    imdbids = collect_imdbids(watchlist)
+    if verbose:
+        print('IMDb-ID List: %s' % imdbids)
 
-feed = load_rssfeed(rssfeed_file)
-filtered_feed = filter_feed(feed, imdbids)
-save_rssfeed(rssfeed_file if not out_file else out_file, filtered_feed)
+    feed = load_rssfeed(rssfeed_file)
+    filtered_feed = filter_feed(feed, imdbids)
+    save_rssfeed(rssfeed_file if not out_file else out_file, filtered_feed)
+
+except Exception as e:
+    errors = True
+    # deleting the feed-xml-file to avoid enqueueing of non-filtered feed
+    os.remove(rssfeed_file)
+    print('[ERROR] %s' % e)
+    traceback.print_exc()
+
+if errors:
+    sys.exit(FEEDSCRIPT_ERROR)
+else:
+    sys.exit(FEEDSCRIPT_SUCCESS)
