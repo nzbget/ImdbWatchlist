@@ -20,3 +20,9 @@ To test how it works - if you browse the feed content in NZBGet the feed will on
 
 ## Quality control
 For fine tuning (quality settings, etc.) use the filter field as usual. See [RSS](https://github.com/nzbget/nzbget/wiki/RSS) for details.
+
+## Limitations
+Since this is a feed script it processes only the feed content. It doesn't send search requests to your indexer to find the movies from the watchlist. That means the script will not download older releases even if they exist for the selected movies. The feed size is limited and usually contains only movies from the last few days or hours.
+
+## Support
+Support is provided via [forum topic](http://forum.nzbget.net/viewtopic.php?f=8&t=2112).
